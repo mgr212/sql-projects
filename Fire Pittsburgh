@@ -1,0 +1,200 @@
+What were my objecives?
+  Find out how many fires there were in a 5 year range
+  Get distinct values for everything relevant( fire types, engines, neighborhoods)
+  How many fires and what type
+  What type occured the most
+  How many differnt unites responding
+  How many neighbohoods
+  Where did most of the fires occur
+  Query days and mothns to see if there are any corralations
+  
+SELECT COUNT(incident_type)
+FROM `fire-pitt-2022.Pitt_Fire.fire17`
+UNION ALL
+SELECT COUNT(incident_type)
+FROM `fire-pitt-2022.Pitt_Fire.fire18`
+UNION ALL
+SELECT COUNT(incident_type)
+FROM `fire-pitt-2022.Pitt_Fire.fire19`
+UNION ALL
+SELECT COUNT(incident_type)
+FROM `fire-pitt-2022.Pitt_Fire.fire20`
+UNION ALL
+SELECT COUNT(incident_type)
+FROM `fire-pitt-2022.Pitt_Fire.fire21`
+(entered results in excel sheet);
+
+Found the total with a SUM function and sub query
+
+SELECT SUM(incident_count) AS total
+FROM
+      (SELECT COUNT(incident_type) as incident_count
+      FROM `fire-pitt-2022.Pitt_Fire.fire17`
+      UNION ALL
+      SELECT COUNT(incident_type) as incident_count
+      FROM `fire-pitt-2022.Pitt_Fire.fire18`
+      UNION ALL
+      SELECT COUNT(incident_type) as incident_count
+      FROM `fire-pitt-2022.Pitt_Fire.fire19`
+      UNION ALL
+      SELECT COUNT(incident_type) as incident_count
+      FROM `fire-pitt-2022.Pitt_Fire.fire20`
+      UNION ALL
+      SELECT COUNT(incident_type) as incident_count
+      FROM `fire-pitt-2022.Pitt_Fire.fire21`);
+      
+Find and count the distinct fire types 
+
+SELECT type_description, incident_type
+FROM `fire-pitt-2022.Pitt_Fire.fire17`
+UNION DISTINCT
+SELECT type_description, incident_type
+FROM `fire-pitt-2022.Pitt_Fire.fire18`
+UNION DISTINCT
+SELECT type_description, incident_type
+FROM `fire-pitt-2022.Pitt_Fire.fire19`
+UNION DISTINCT
+SELECT type_description, incident_type
+FROM `fire-pitt-2022.Pitt_Fire.fire20`
+UNION DISTINCT
+SELECT type_description, incident_type
+FROM `fire-pitt-2022.Pitt_Fire.fire21`
+ORDER BY incident_type ASC;
+
+Get a count of each iniduvidual fire type foe each year
+
+SELECT COUNT(type_description), type_description
+FROM `fire-pitt-2022.Pitt_Fire.fire17`
+GROUP BY type_description
+ORDER BY type_description
+(did this 5x for each year and put into excel sheet)
+
+Find and count the distinct neighborhods
+
+SELECT neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire17`
+UNION DISTINCT
+SELECT neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire18`
+UNION DISTINCT
+SELECT neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire19`
+UNION DISTINCT
+SELECT DISTINCT neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire20`
+UNION DISTINCT
+SELECT neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire2021`
+ORDER BY neighborhood
+
+Incident per neighborhhod by year
+      
+SELECT COUNT(incident_type) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire17`
+GROUP BY neighborhood
+UNION ALL
+SELECT COUNT(incident_type) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire18`
+GROUP BY neighborhood
+UNION ALL
+SELECT COUNT(incident_type) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire19`
+GROUP BY neighborhood
+UNION ALL
+SELECT COUNT(incident_type) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire20`
+GROUP BY neighborhood
+UNION ALL
+SELECT COUNT(incident_type) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire2021`
+GROUP BY neighborhood
+ORDER BY neighborhood;
+(first issue i ran into, i coundt get indiviual rows for year or neighborhood each trying different queries. I then added a new table just to get the indiviual neighborhod count for each neighbohood)
+
+New table, was able to get the incidnet count for each neighborhood
+SELECT COUNT(neighborhood) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY neighborhood
+ORDER BY incident DESC;
+(Wilkinsburgh had the most)
+
+Indiviudal year for neighborhoods
+SELECT COUNT(neighborhood) AS incident, neighborhood
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+WHERE date_15 = 2017
+GROUP BY neighborhood
+ORDER BY incident DESC;
+(did 5x for each year)
+
+Get a engine and truck count
+
+SELECT COUNT(DISTINCT primary_unit), primary_unit
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY primary_unit;
+
+Number of incedents for each indiviual unit
+
+SELECT COUNT(primary_unit) AS incidents, primary_unit
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY primary_unit
+ORDER by incidents DESC;
+(16 engine had the most, stationed in Wilkinsburg)
+
+Percentage of incidents per neighborhoods 
+
+SELECT type_description, COUNT(type_description) AS incidents, 
+ROUND(COUNT(neighborhood) / (SELECT COUNT(call_no) 
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`) * 100, 2) AS percentage
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY type_description
+ORDER by incidents DESC;
+
+Percentage of incidents per unit
+
+SELECT primary_unit, COUNT(primary_unit) AS incidents, 
+ROUND(COUNT(primary_unit) / (SELECT COUNT(call_no) 
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`) * 100, 2) AS percentage
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY primary_unit
+ORDER by incidents DESC;
+
+Percentage of fire types
+
+SELECT type_description, COUNT(type_description) AS incidents, 
+ROUND(COUNT(neighborhood) / (SELECT COUNT(call_no) 
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`) * 100, 2) AS percentage
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY type_description
+ORDER by incidents DESC;
+
+Last, montha and day count
+
+Month
+SELECT COUNT(month) AS incidents, month
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY month
+ORDER by incidents DESC;
+
+
+SELECT month, COUNT(month) AS incidents, 
+ROUND(COUNT(neighborhood) / (SELECT COUNT(call_no) 
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`) * 100, 2) AS percentage
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY month
+ORDER by incidents DESC;
+
+Day
+SELECT COUNT(weekday) AS incidents, weekday
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY weekday
+ORDER by incidents DESC;
+
+SELECT weekday, COUNT(weekday) AS incidents, 
+ROUND(COUNT(weekday) / (SELECT COUNT(call_no) 
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`) * 100, 2) AS percentage
+FROM `fire-pitt-2022.Pitt_Fire.fire_all`
+GROUP BY weekday
+ORDER by incidents DESC;
+
+
+      
