@@ -1,8 +1,127 @@
-For this project, I wanted to create a dataset with police incidents in the city of Pittsburgh and the previous data set I used for fire incidents.
-Looking at both data sets there were some unique keys and primary keys I could use to join the data. The primary keys would be neighborhood and police zone. The secondary keys would be the year and date.
-Before I could upload it to big query this required me to clean the data in excel. This was initially easy, as there were no duplicates and the blanks were things I wouldn’t be able to fill in so they would be cut if I decided to do a visual of the results. After cleaning I ran into some issues, the police dataset was a lot larger than the fire data set, so I had to go back and take a closer look since big query wouldn’t allow me to have the police zone as an integer in both sets. Back in excel, I found multiple rows that had words and abbreviations and changed them to a numerical values. Once I was able to join the tables I began queries on the data.
-Some of the queries I did were just to get incident totals per year and then the entire dataset with joins. I also looked at the incidents by neighborhoods with joins. It's hard to find any correlations since the police incidents were significantly larger than the fire incidents.
+What were my objecives?
+  Create a simple data base to join tables
+  Compare the incdent count betwen fire and police
+  Compare the incidnet count of the neighborhoods
+  Filter the data by year and neighborhhod for a deeper look
+  
+  Intial join query
+SELECT offenses, incident_type
+FROM `pitt-374613.EMS.fire`, `pitt-374613.EMS.police`
+WHERE `pitt-374613.EMS.fire`.neighborhood =`pitt-374613.EMS.police`. neighborhood
+(i didnt use a join statement becasue i was troublshooting trying to get the schema correct for querries
 
-Original datasets
-fire: https://data.wprdc.org/datastore/dump/8d76ac6b-5ae8-4428-82a4-043130d17b02
-police: https://data.wprdc.org/datastore/dump/044f2016-1dfd-4ab0-bc1e-065da05fca2e
+Coount of incidents for each table
+
+SELECT COUNT(DISTINCT p.pk) AS police, COUNT(DISTINCT f.call_no) AS fire
+FROM `pitt-374613.EMS.fire` AS f 
+JOIN `pitt-374613.EMS.police` AS p 
+ON f.police_zone = p.police_zone;
+
+Sticking with 'police_zone', filtered results by indiviual zone
+
+SELECT COUNT(DISTINCT p.pk) AS police, COUNT(DISTINCT f.call_no) AS fire
+FROM `pitt-374613.EMS.fire` AS f 
+JOIN `pitt-374613.EMS.police` AS p 
+ON f.police_zone = p.police_zone
+WHERE f.police_zone = 1; 
+(seven total zones total zones)
+
+Next, incidents per neigberhood
+
+SELECT COUNT(DISTINCT p.pk) AS police, COUNT(DISTINCT f.call_no) AS fire, p.neighborhood
+FROM `pitt-374613.EMS.fire` ASf
+JOIN `pitt-374613.EMS.police` AS p 
+ON f.neighborhood = p.neighborhood 
+GROUP BY p.neighborhood
+ORDER BY police DESC, fire DESC;
+
+Filtered these results by year
+
+SELECT COUNT(DISTINCT p.pk) AS police, COUNT(DISTINCT f.call_no) AS fire,
+p.neighborhood,
+FROM `pitt-374613.EMS.fire` AS f 
+INNER JOIN `pitt-374613.EMS.police` AS p 
+ON f.neighborhood = p.neighborhood
+WHERE f.year = 2016
+GROUP BY p.neighborhood;
+(did this a few more times with different years)
+
+Did a count by just the year
+
+SELECT COUNT(DISTINCT p.pk) as police, COUNT(DISTINCT f.call_no) as fire
+FROM `pitt-374613.EMS.fire` AS f 
+JOIN `pitt-374613.EMS.police` AS p 
+ON f.year = p.year
+WHERE f.year = 2016;
+(did this a few more times with different years)
+
+I feel other factors would be needed to find correlations, mainly the medical emergencies that fire also goes on along with paramedics to show any correlatons or trends
+or anything that might be unusal. 
+
+Next, quereries to prepare for a future viusalization project
+
+Over percentage of percentage by neighborhood
+
+Top 10 ten neighborhoods with police incidents
+
+SELECT COUNT(pk) AS total, neighborhood
+FROM pitt-374613.EMS.police
+GROUP BY neighborhood
+ORDER BY total DESC
+LIMIT 10;
+
+By year
+
+SELECT COUNT(pk) AS total, neighborhood
+FROM pitt-374613.EMS.police
+WHERE year = 2016
+GROUP BY neighborhood
+ORDER BY total DESC
+LIMIT 10;
+
+By police zone
+
+SELECT COUNT(pk) AS total, police_zone
+FROM pitt-374613.EMS.police
+GROUP BY police_zone
+ORDER BY total DESC
+
+Zone by year
+
+SELECT COUNT(pk) AS total, police_zone
+FROM pitt-374613.EMS.police
+WHERE year = 2016
+GROUP BY police_zone
+ORDER BY total DESC;
+
+Next break it down into the percentage of calls by neighbohood
+
+WITH counts AS
+  (SELECT COUNT(pk) AS total, neighborhood
+  FROM pitt-374613.EMS.police
+  GROUP BY neighborhood)
+SELECT neighborhood, total, (total / (SELECT SUM(total) FROM counts)) * 100 AS percentage
+FROM counts
+ORDER BY total DESC
+LIMIT 10;
+
+BY police zone 
+
+WITH counts AS
+  (SELECT COUNT(pk) AS total, police_zone
+  FROM pitt-374613.EMS.police
+  GROUP BY police_zone)
+SELECT police_zone, total, (total / (SELECT SUM(total) FROM counts)) * 100 AS percentage
+FROM counts
+ORDER BY total DESC;
+
+Last, by year
+
+WITH counts AS
+  (SELECT COUNT(pk) AS total, year
+  FROM pitt-374613.EMS.police
+  GROUP BY year)
+SELECT year, total, (total / (SELECT SUM(total) FROM counts)) * 100 AS percentage
+FROM counts
+ORDER BY total DESC;
+
